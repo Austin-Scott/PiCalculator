@@ -76,38 +76,11 @@ template<class T> int countDigits(const T &input, int startPos = 0, int backChec
 //Return the number of digits input has correctly of Pi. Stops counting at 1 million digits of Pi.
 //Prints out digits as they are verified correct.
 template<class T> int printCountDigits(const T &input, int startPos = 0, int backCheck=10) {
-	if (startPos < 0) startPos = 0;
-	string temp = to_string(input);
-	static int skipCount = 0;
-	if (startPos == 0) skipCount = 0;
-	int index = startPos+skipCount;
-
-	int checkEnd = index - backCheck;
-	int digit = startPos - 1;
-	if (checkEnd < 0) checkEnd = 0;
-	for (int i = index - 1; i >= checkEnd; i--) {
-		if (temp[i]<'0' || temp[i]>'9') {
-			continue;
-		}
-		if (temp[i] != getDigit(digit)) return startPos;
-		digit--;
+	int initialStartPos = startPos;
+	startPos = countDigits(input, startPos, backCheck);
+	for (int i = initialStartPos; i < startPos; i++) {
+		if (i == 1) cout << '.';
+		cout << getDigit(i);
 	}
-
-	while (startPos < 1000000) {
-		if (index >= temp.size()) return startPos;
-		while (temp[index]<'0' || temp[index]>'9') {
-			index++; //Skip not digit characters such as the decimal point
-			skipCount++;
-		}
-		char c = getDigit(startPos);
-		if (temp[index] != c) 
-			return startPos;
-		
-		if (startPos == 1) cout << '.';
-		cout << c;
-
-		index++;
-		startPos++;
-	}
-	return 1000000;
+	return startPos;
 }
