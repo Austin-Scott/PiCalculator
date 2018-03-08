@@ -100,7 +100,7 @@ int main() {
 		mpz_class M2;
 		mpq_class M=1;
 		while (piCount < 1000000) {
-			while (!(SnodeCount < 3)) this_thread::sleep_for(chrono::milliseconds(1));
+			while (!(SnodeCount < 5)) this_thread::sleep_for(chrono::milliseconds(10));
 			M1 = pow(K, (mpz_class)3);
 			M2 = pow(k, (mpz_class)3);
 			M=(mpq_class)(M1 - (K << 4))*(M / M2);
