@@ -100,7 +100,7 @@ int main() {
 		mpz_class M2;
 		mpq_class M=1;
 		while (piCount < 1000000) {
-			while (!(SnodeCount < 10)) this_thread::sleep_for(chrono::milliseconds(10));
+			while (!(SnodeCount < 3)) this_thread::sleep_for(chrono::milliseconds(1));
 			M1 = pow(K, (mpz_class)3);
 			M2 = pow(k, (mpz_class)3);
 			M=(mpq_class)(M1 - (K << 4))*(M / M2);
@@ -123,10 +123,8 @@ int main() {
 			
 			k++;
 
-			mpq_class sumDelta = getDeltaS() / X;
-
 			sumGuard.lock();
-			S += sumDelta;
+			S += getDeltaS() / X;
 			sumGuard.unlock();
 		}
 	});
