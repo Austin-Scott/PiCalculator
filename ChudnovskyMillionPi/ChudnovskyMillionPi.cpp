@@ -96,17 +96,20 @@ int main() {
 		mpz_class k = 1;
 		mpz_class K = 6;
 		mpz_class L = 13591409;
+		mpz_class X = 1;
 		mpz_class M1;
 		mpz_class M2;
 		mpq_class M=1;
 		while (piCount < 1000000) {
-			while (!(SnodeCount < 5)) this_thread::sleep_for(chrono::milliseconds(10));
+			while (!(SnodeCount < 3)) this_thread::sleep_for(chrono::microseconds(100));
 			M1 = pow(K, (mpz_class)3);
 			M2 = pow(k, (mpz_class)3);
 			M=(mpq_class)(M1 - (K << 4))*(M / M2);
 
 			L += 545140134;
-			addS(M*L);
+			X *= -262537412640768000;
+
+			addS((M*L)/X);
 
 			K += 12;
 			k++;
@@ -115,33 +118,32 @@ int main() {
 
 	//Compute Sum values from M values and partial Sum deltas
 	thread t1([&]() {
-		mpz_class k = 1;
-		mpz_class X = 1;
 		while (piCount < 1000000) {
-
-			X *= -262537412640768000;
-			
-			k++;
-
 			sumGuard.lock();
-			S += getDeltaS() / X;
+			S += getDeltaS();
 			sumGuard.unlock();
+			this_thread::sleep_for(chrono::microseconds(500));
 		}
 	});
 
+	mpq_class tempS;
+	int previousPi = piCount;
+
 	while (piCount<1000000) {
 		
-		auto prec = getPrecisionNeeded(piCount + 100);
+		auto prec = getPrecisionNeeded(piCount + ((piCount-previousPi)+500));
 		mpf_class Q(10005, prec);
 		Q = sqrt(Q) * 426880;
 
 		sumGuard.lock();
-		mpf_class pi(Q / S, prec);
+		tempS = S;
 		sumGuard.unlock();
+		mpf_class pi(Q / tempS, prec);
 
 		piCount = piPrintCount(pi, piCount);
+		previousPi = piCount;
 
-
+		this_thread::sleep_for(chrono::milliseconds(10));
 	}
 	t0.join();
 	t1.join();
