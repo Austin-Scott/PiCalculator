@@ -135,12 +135,12 @@ const string piShape =
 "***********************************************************************************************************************\n"
 "\n";
 
-//prints out pi as verfied correct with nice formatting and status updates
-template<class T> int piPrintCount(const T &input, int startPos = 0, int backCheck = 10) {
+//prints out pi as it converges from the Chudnovsky algorithm with nice formatting and status updates
+int piPrintChudnovsky(int iterations, int startPos) {
 	static auto startTime = chrono::system_clock::now();
 
 	int initialStartPos = startPos;
-	startPos = countDigits(input, startPos, backCheck);
+	startPos = 14.1816474627254776555 * (double)iterations;
 
 	static int printIndex = 0;
 	bool printDecimal = false;
@@ -158,7 +158,10 @@ template<class T> int piPrintCount(const T &input, int startPos = 0, int backChe
 				continue;
 			}
 
-			cout << getDigit(i);
+			if(i<=1000000)
+				cout << getDigit(i);
+			else 
+				return 100000;
 
 			printIndex++;
 		}
