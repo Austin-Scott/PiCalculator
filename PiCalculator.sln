@@ -11,7 +11,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MachinPi", "MachinPi\Machin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChudnovskyPi", "ChudnovskyPi\ChudnovskyPi.vcxproj", "{250F08FF-F0C4-4997-A2BB-BF775D8CB708}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChudnovskyMillionPi", "ChudnovskyMillionPi\ChudnovskyMillionPi.vcxproj", "{B378789F-AB2A-46E3-B216-B1941FE6AAD1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BinarySplitChudnovskyPi", "BinarySplitChudnovskyPi\BinarySplitChudnovskyPi.vcxproj", "{B378789F-AB2A-46E3-B216-B1941FE6AAD1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

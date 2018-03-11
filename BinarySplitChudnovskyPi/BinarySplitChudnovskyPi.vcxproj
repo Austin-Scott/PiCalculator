@@ -22,6 +22,7 @@
     <ProjectGuid>{B378789F-AB2A-46E3-B216-B1941FE6AAD1}</ProjectGuid>
     <RootNamespace>ChudnovskyMillionPi</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>BinarySplitChudnovskyPi</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -142,7 +143,7 @@
     <ClInclude Include="PiOutputter.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ChudnovskyMillionPi.cpp" />
+    <ClCompile Include="BinarySplitChudnovskyPi.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
