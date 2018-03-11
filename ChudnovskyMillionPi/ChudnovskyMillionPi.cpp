@@ -1,82 +1,64 @@
 #include <iostream>
 #include <mpir.h>
 #include <mpirxx.h>
-#include <thread>
-#include <atomic>
-#include <mutex>
 
 #include "../PiChecker.h"
 #include "PiOutputter.h"
 
 using namespace std;
 
-//Super-Fast calculation for pi using the Chudnovsky algorithm: https://en.wikipedia.org/wiki/Chudnovsky_algorithm
-int main() {
-	cout << "Chudnovsky algorithm for pi to one million digits:" << endl;
+mpz_class C3_24 = mpz_class("10939058860032000");
+mpz_class A = 13591409;
+mpz_class B = 545140134;
+mpz_class C = 640320;
+mpz_class D = 426880;
+mpz_class E = 10005;
 
-	atomic<int> piCount = 0;
+const double DIGITS_PER_ITERATION = 14.1816474627254776555;
+int targetDigits = 1000000;
 
-	mpq_class EM = 83160;
-	atomic<int> Ek = 2;
+struct PQT {
+	mpz_class P, Q, T;
+};
 
-	mpq_class OM = 1;
-	atomic<int> Ok = 1;
-
-	mutex mGuard;
-
-	mpq_class S = 13591409;
-	mutex sumGuard;
-
-	//Odd k values
-	thread t1([&]() {
-		int K = 6;
-		mpz_class M1 = 0;
-		mpz_class M2 = 0;
-		mpz_class L = 13591409;
-		mpz_class X = 1;
-
-		while (piCount<1000000) {
-			mpz_ui_pow_ui(M1.get_mpz_t(), K, 3);
-			mpz_ui_pow_ui(M2.get_mpz_t(), Ok, 3);
-			while (Ek != Ok + 1) this_thread::sleep_for(chrono::microseconds(1));
-			mGuard.lock();
-			OM = (mpq_class)(M1 - ((mpz_class)K << 4))*EM / M2;
-			mGuard.unlock();
-			Ok += 2;
-			L += 1090280268;
-			X *= mpz_class("68925893036108889235415629824000000");
-			sumGuard.lock();
-			S += (OM*L) / X;
-			sumGuard.unlock();
-			K += 24;
+PQT binaryChudnovsky(int a, int b) {
+	PQT result;
+	if (b == a + 1) {
+		if (a == 0) {
+			result.P = 1;
+			result.Q = 1;
 		}
-	});
-
-	//Even k values and printing
-	int K = 18;
-	mpz_class M1 = 0;
-	mpz_class M2 = 0;
-	mpz_class L = 558731543;
-	mpz_class X = -262537412640768000;
-	
-	while (piCount<1000000) {
-		mpz_ui_pow_ui(M1.get_mpz_t(), K, 3);
-		mpz_ui_pow_ui(M2.get_mpz_t(), Ek, 3);
-		while (Ok != Ek + 1) this_thread::sleep_for(chrono::microseconds(1));
-		mGuard.lock();
-		EM = (mpq_class)(M1 - ((mpz_class)K << 4))*OM / M2;
-		mGuard.unlock();
-		Ek += 2;
-		L += 1090280268;
-		X *= mpz_class("68925893036108889235415629824000000");
-		sumGuard.lock();
-		S += (EM*L) / X;
-		sumGuard.unlock();
-		K += 24;
-		
-		piCount = piPrintChudnovsky(Ek, piCount);
+		else {
+			result.P = (6 * a - 5);
+			result.P *= (2 * a - 1);
+			result.P *= (6 * a - 1);
+			result.Q = C3_24*b*b*b;
+		}
+		result.T = result.P * (A + B * b);
+		if ((b & 1)==1) {
+			result.T = -result.T;
+		}
 	}
+	else {
+		int m = (a + b) / 2;
+		PQT am = binaryChudnovsky(a, m);
+		PQT mb = binaryChudnovsky(m, b);
+		result.P = am.P * mb.P;
+		result.Q = am.Q * mb.Q;
+		result.T = mb.Q * am.T + am.P * mb.T;
+	}
+	return result;
+}
 
-	cout << endl << "One million digits of pi have been calculated! Happy pi day! :)" << endl;
+int main() {
+	int iterationsNeeded = ((double)targetDigits / DIGITS_PER_ITERATION)+1;
+	PQT result = binaryChudnovsky(0, iterationsNeeded);
+	
+	auto prec = getPrecisionNeeded(targetDigits);
+	mpf_class pi(0, prec);
+	pi = D * sqrt((mpf_class)E) * result.Q;
+	pi /= (result.Q * A + result.T);
+	int digits = countDigits(pi);
+	cout << digits << endl;
 	system("pause");
 }
