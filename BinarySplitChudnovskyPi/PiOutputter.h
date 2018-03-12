@@ -74,17 +74,29 @@ string formatElapsedTime(long seconds) {
 	return result;
 }
 
+string formatNumber(int num) {
+	string result;
+	string temp = to_string(num);
+	for (int i = 0; i < temp.size(); i++) {
+		result.push_back(temp[i]);
+		if (i!=temp.size()-1 && (temp.size() - (i+1)) % 3 == 0) {
+			result.push_back(',');
+		}
+	}
+	return result;
+}
+
 template<class T> string formatElapsedTime(T time) {
 	long seconds = time.count();
 	return formatElapsedTime(seconds);
 }
 
-template<class T> void printStatus(int numOfDigits, T elapsedTime) {
+template<class T> void printStatus(int numOfDigits, T elapsedTime, int targetDigits) {
 	static int lastNumOfDigits = numOfDigits;
 	int deltaDigits = numOfDigits - lastNumOfDigits;
 	lastNumOfDigits = numOfDigits;
 
-	int digitsToGo = 1000000 - numOfDigits;
+	int digitsToGo = targetDigits - numOfDigits;
 	
 	static auto startTime = chrono::system_clock::now();
 	auto elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startTime);
@@ -95,7 +107,7 @@ template<class T> void printStatus(int numOfDigits, T elapsedTime) {
 	long secToGo = milliToGo / 1000;
 
 	string result;
-	result += "Number of digits: " + to_string(numOfDigits);
+	result += "Number of digits: " + formatNumber(numOfDigits);
 	result += " | Elapsed time: " + formatElapsedTime(elapsedTime);
 	result += " | Time remaining: " + formatElapsedTime(secToGo);
 	printBox(result);
@@ -136,13 +148,20 @@ const string piShape =
 "\n";
 
 //prints out pi as it converges from the Chudnovsky algorithm with nice formatting and status updates
-int piPrintChudnovsky(int iterations, int startPos) {
+int piPrintChudnovsky(const string &pi, int iterations, int startPos, int targetDigits) {
 	static auto startTime = chrono::system_clock::now();
 
 	int initialStartPos = startPos;
 	startPos = 14.1816474627254776555 * (double)iterations;
+	if (startPos > targetDigits) startPos = targetDigits;
+
+	if (pi.size() == 0) {
+		this_thread::sleep_for(chrono::milliseconds(1000));
+		return 0;
+	}
 
 	static int printIndex = 0;
+	static int shapesBeforeStatus = 20;
 	bool printDecimal = false;
 	for (int i = initialStartPos; i < startPos; i++) {
 		while (printIndex < piShape.size() && piShape[printIndex] != '*') {
@@ -157,22 +176,28 @@ int piPrintChudnovsky(int iterations, int startPos) {
 				i--;
 				continue;
 			}
-
-			if(i<=1000000)
-				cout << getDigit(i);
-			else 
-				return 100000;
+			cout << pi[i];
 
 			printIndex++;
 		}
 		else {
-			//Print status box, i--, reset printIndex, and continue
-			auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startTime);
-			printStatus(initialStartPos+(i-initialStartPos), elapsed);
+			shapesBeforeStatus--;
+			if (shapesBeforeStatus <= 0) {
+				auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startTime);
+				printStatus(initialStartPos + (i - initialStartPos), elapsed, targetDigits);
+				this_thread::sleep_for(chrono::milliseconds(1000));
+				shapesBeforeStatus = 20;
+			}
 			i--;
 			printIndex = 0;
 			continue;
 		}
+	}
+
+	if (startPos == targetDigits) {
+		cout << endl;
+		auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startTime);
+		printStatus(targetDigits, elapsed, targetDigits);
 	}
 
 	return startPos;

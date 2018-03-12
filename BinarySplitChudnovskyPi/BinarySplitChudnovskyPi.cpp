@@ -1,6 +1,10 @@
 #include <iostream>
 #include <mpir.h>
 #include <mpirxx.h>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <cassert>
 
 #include "../PiChecker.h"
 #include "PiOutputter.h"
@@ -15,7 +19,7 @@ mpz_class E = 10005;
 mpz_class C3_24 = C * C * C / 24;
 
 const double DIGITS_PER_ITERATION = 14.1816474627254776555;
-int targetDigits = 1000000;
+int targetDigits = 200000000;
 
 struct PQT {
 	mpz_class P, Q, T;
@@ -50,13 +54,53 @@ PQT binaryChudnovsky(int a, int b) {
 
 int main() {
 	int iterationsNeeded = ((double)targetDigits / DIGITS_PER_ITERATION)+1;
-	PQT result = binaryChudnovsky(0, iterationsNeeded);
 	
+
+	atomic<int> piCount = 0;
+	atomic<int> iterationsPerBlock = 10000;
+	atomic<int> iterations=0;
+
 	auto prec = getPrecisionNeeded(targetDigits);
 	mpf_class pi(0, prec);
-	pi = D * sqrt((mpf_class)E) * result.Q;
-	pi /= (result.Q * A + result.T);
-	int digits = countDigits(pi);
-	cout << digits << endl;
+
+	cout << "Computing sqrt(10005) to " << formatNumber(targetDigits) << " decimal digits..." << endl;
+	mpf_class sqrtE(E, prec);
+	sqrtE = sqrt(sqrtE);
+	cout << "Done." << endl;
+
+	cout << "Computing first " << formatNumber(iterationsPerBlock) << " iterations of Chudnovsky..." << endl;
+	PQT result=binaryChudnovsky(iterations, iterations + iterationsPerBlock);
+	iterations += iterationsPerBlock;
+	cout << "Done" << endl;
+
+	cout << "Starting main loop..." << endl;
+
+	mutex piGuard;
+
+	string piStr;
+
+	//Worker thread to print to console while main thread continues pi calculation
+	thread t0([&]() {
+		while (piCount < targetDigits) {
+			piGuard.lock();
+			piStr = to_string(pi);
+			piGuard.unlock();
+
+			piCount = piPrintChudnovsky(piStr, iterations, piCount, targetDigits);
+		}
+	});
+
+	while (iterations<iterationsNeeded) {
+		result = result + binaryChudnovsky(iterations, iterations + iterationsPerBlock);
+		iterations += iterationsPerBlock;
+
+		piGuard.lock();
+		pi = D * sqrtE * result.Q;
+		pi /= (result.Q * A + result.T);
+		piGuard.unlock();
+	}
+
+	t0.join();
+
 	system("pause");
 }

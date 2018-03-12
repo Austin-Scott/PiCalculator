@@ -10,7 +10,7 @@ extern const unsigned char PI_MILLION[500000];
 #ifdef __GMP_H__
 #ifdef __GMP_PLUSPLUS__
 
-string to_string(mpf_class _Val) {
+string to_string(const mpf_class &_Val) {
 	mp_exp_t exp;
 	return _Val.get_str(exp, 10);
 }
