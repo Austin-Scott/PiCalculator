@@ -9,7 +9,7 @@
 #include "../PiChecker.h"
 
 #define DIGITS_PER_ITERATION 14.1816474627254776555
-#define targetDigits 1000000
+#define targetDigits 1000000000
 
 #include "PiOutputter.h"
 
@@ -69,7 +69,7 @@ int main() {
 	atomic<int> piCalcCount = 0; 
 		//Span size of iterations that the divide and conquer algorithm covers
 		//The larger this number is the more memory will be needed but the faster we will converge on pi.
-	atomic<int> iterationsPerBlock = 100000; 
+	atomic<int> iterationsPerBlock = 1000000; 
 		//Stores number of times Chudnovsky Algorithm has been iterated.
 	atomic<int> iterations=0; 
 		//Stores the time it took to compute the last Chudnovsky block in milliseconds
@@ -85,7 +85,9 @@ int main() {
 	sqrtE = sqrt(sqrtE);
 	cout << "Done." << endl;
 
-	cout << "The value of pi is approximately..." << endl;
+	system("pause");
+
+	cout << "Behold the power of pi..." << endl;
 
 	mutex piStrGuard;
 
