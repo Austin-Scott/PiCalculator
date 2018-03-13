@@ -91,7 +91,7 @@ template<class T> string formatElapsedTime(T time) {
 	return formatElapsedTime(seconds);
 }
 
-template<class T> void printStatus(int numOfDigits, T elapsedTime, int targetDigits) {
+template<class T> void printStatus(int numOfDigits, T elapsedTime) {
 	static int lastNumOfDigits = numOfDigits;
 	int deltaDigits = numOfDigits - lastNumOfDigits;
 	lastNumOfDigits = numOfDigits;
@@ -147,46 +147,70 @@ const string piShape =
 "***********************************************************************************************************************\n"
 "\n";
 
+int getDigitsPerShape() {
+	int result = 0;
+	for (char c : piShape) {
+		if (c == '*') result++;
+	}
+	return result;
+}
+
+const int shapesToPrint = 20;
+const int statusDelayMilli = 1000;
+
 //prints out pi as it converges from the Chudnovsky algorithm with nice formatting and status updates
-int piPrintChudnovsky(const string &pi, int iterations, int startPos, int targetDigits) {
-	static auto startTime = chrono::system_clock::now();
+int piPrintChudnovsky(const string &subStrPi, int startPos, long durationMilli) {
+	static auto timeAtStart = chrono::system_clock::now();
+	static int digitsPerShape = getDigitsPerShape();
+	static int printIndex = 0;
+	static int shapesBeforeStatus = shapesToPrint;
 
-	int initialStartPos = startPos;
-	startPos = 14.1816474627254776555 * (double)iterations;
-	if (startPos > targetDigits) startPos = targetDigits;
+	if (startPos > targetDigits) return targetDigits;
 
-	if (pi.size() == 0) {
+	if (subStrPi.size() == 0) {
 		this_thread::sleep_for(chrono::milliseconds(1000));
-		return 0;
+		return startPos;
 	}
 
-	static int printIndex = 0;
-	static int shapesBeforeStatus = 20;
+	int digitsToPrint = subStrPi.size();
+	int digitsPerStatus = digitsPerShape*shapesToPrint;
+	int statusesToPrint = digitsToPrint / digitsPerStatus;
+	int durationLeft = durationMilli - (statusesToPrint*statusDelayMilli);
+	if (durationLeft < 0)
+		durationLeft = 0;
+	int printDelay = durationLeft / digitsToPrint;
+	int statusDelay = statusDelayMilli;
+	if (printDelay == 0 && statusesToPrint != 0) {
+		statusDelay = durationMilli/statusesToPrint;
+	}
+
+
 	bool printDecimal = false;
-	for (int i = initialStartPos; i < startPos; i++) {
+	for (int i = 0; i < digitsToPrint; i++) {
 		while (printIndex < piShape.size() && piShape[printIndex] != '*') {
 			cout << piShape[printIndex];
 			printIndex++;
 		}
 		if (printIndex != piShape.size()) {
-			if (i == 1 && !printDecimal) {
+			if (startPos==0 && i == 1 && !printDecimal) {
 				cout << '.';
 				printDecimal = true;
 				printIndex++;
 				i--;
 				continue;
 			}
-			cout << pi[i];
+			cout << subStrPi[i];
+			this_thread::sleep_for(chrono::milliseconds(printDelay));
 
 			printIndex++;
 		}
 		else {
 			shapesBeforeStatus--;
 			if (shapesBeforeStatus <= 0) {
-				auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startTime);
-				printStatus(initialStartPos + (i - initialStartPos), elapsed, targetDigits);
-				this_thread::sleep_for(chrono::milliseconds(1000));
-				shapesBeforeStatus = 20;
+				auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - timeAtStart);
+				printStatus(startPos + i, elapsed);
+				this_thread::sleep_for(chrono::milliseconds(statusDelay));
+				shapesBeforeStatus = shapesToPrint;
 			}
 			i--;
 			printIndex = 0;
@@ -194,11 +218,31 @@ int piPrintChudnovsky(const string &pi, int iterations, int startPos, int target
 		}
 	}
 
-	if (startPos == targetDigits) {
+	int endPos = startPos + digitsToPrint;
+
+	if (endPos == targetDigits) {
 		cout << endl;
-		auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startTime);
-		printStatus(targetDigits, elapsed, targetDigits);
+		auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - timeAtStart);
+		printStatus(targetDigits, elapsed);
+		return endPos;
 	}
 
-	return startPos;
+	return endPos;
+}
+
+const string endBanner =
+" _    _                                 _       _             _ _ _ \n"
+"| |  | |                               (_)     | |           | | | |\n"
+"| |__| | __ _ _ __  _ __  _   _   _ __  _    __| | __ _ _   _| | | |\n"
+"|  __  |/ _` | '_ \\| '_ \\| | | | | '_ \\| |  / _` |/ _` | | | | | | |\n"
+"| |  | | (_| | |_) | |_) | |_| | | |_) | | | (_| | (_| | |_| |_|_|_|\n"
+"|_|  |_|\\__,_| .__/| .__/ \\__, | | .__/|_|  \\__,_|\\__,_|\\__, (_|_|_)\n"
+"             | |   | |     __/ | | |                     __/ |      \n"
+"             |_|   |_|    |___/  |_|                    |___/       ";
+
+void printConclusion() {
+	cout << endl << "Congratulations! You made it to the end... well... not of pi but the end of this program :)" << endl
+		<< "Go have yourself a delicious slice of pie because you have earned it!" << endl
+		<< "Hopefully now you have a higher level of respect for this wonderfully irrational number!" << endl;
+	printBox(endBanner);
 }
