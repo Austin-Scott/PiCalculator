@@ -69,13 +69,17 @@ int main() {
 	atomic<int> piCalcCount = 0; 
 		//Span size of iterations that the divide and conquer algorithm covers
 		//The larger this number is the more memory will be needed but the faster we will converge on pi.
-	atomic<int> iterationsPerBlock = 1000000; 
+	atomic<int> iterationsPerBlock = 2000000; 
 		//Stores number of times Chudnovsky Algorithm has been iterated.
 	atomic<int> iterations=0; 
 		//Stores the time it took to compute the last Chudnovsky block in milliseconds
 	atomic<long> blockIterationTimeMilli = 0;
 		//Stores the current PQT sum of all blocks from the main thread.
 	PQT result;
+
+	updateCurrentDigits(0);
+	updateElapsed("0");
+	updateEstimated("inf");
 
 	auto prec = getPrecisionNeeded(targetDigits);
 	mpf_class pi(0);
@@ -84,10 +88,6 @@ int main() {
 	mpf_class sqrtE(E, prec);
 	sqrtE = sqrt(sqrtE);
 	cout << "Done." << endl;
-
-	system("pause");
-
-	cout << "Behold the power of pi..." << endl;
 
 	mutex piStrGuard;
 
@@ -102,6 +102,13 @@ int main() {
 			if(piStr.size()!=0)
 				piSubStr = piStr.substr(piPrintCount, piCalcCount - piPrintCount);
 			piStrGuard.unlock();
+
+			if (piPrintCount == 0 && piSubStr.size() > 0) {
+				system("pause");
+				system("cls");
+				cout << "Behold the power of pi..." << endl;
+				this_thread::sleep_for(chrono::seconds(10));
+			}
 
 			piPrintCount = piPrintChudnovsky(piSubStr,piPrintCount,blockIterationTimeMilli);
 		}

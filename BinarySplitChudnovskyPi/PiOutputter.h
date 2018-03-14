@@ -75,6 +75,12 @@ string formatElapsedTime(long seconds) {
 	return result;
 }
 
+chrono::seconds getElapsedTime() {
+	static auto startTime = chrono::system_clock::now();
+	auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startTime);
+	return elapsed;
+}
+
 string formatNumber(int num) {
 	string result;
 	string temp = to_string(num);
@@ -113,7 +119,7 @@ void updateEstimated(string value) {
 	file.close();
 }
 
-template<class T> void printStatus(int numOfDigits, T elapsedTime) {
+void printStatus(int numOfDigits) {
 	static int lastNumOfDigits = numOfDigits;
 	int deltaDigits = numOfDigits - lastNumOfDigits;
 	lastNumOfDigits = numOfDigits;
@@ -130,11 +136,10 @@ template<class T> void printStatus(int numOfDigits, T elapsedTime) {
 
 	string result;
 	result += "Number of digits: " + formatNumber(numOfDigits);
-	result += " | Elapsed time: " + formatElapsedTime(elapsedTime);
+	result += " | Elapsed time: " + formatElapsedTime(getElapsedTime());
 	result += " | Time remaining: " + formatElapsedTime(secToGo);
 	printBox(result);
 
-	updateElapsed(formatElapsedTime(elapsedTime));
 	updateEstimated(formatElapsedTime(secToGo));
 	//cout << endl;
 }
@@ -242,12 +247,11 @@ int getDigitsPerShape() {
 }
 
 const int shapesToPrint = 40;
-const int statusDelayMaxMilli = 2000;
-const int statusDelayMinMilli = 100;
+const int statusDelayMaxMilli = 2;
+const int statusDelayMinMilli = 1;
 
 //prints out pi as it converges from the Chudnovsky algorithm with nice formatting and status updates
 int piPrintChudnovsky(const string &subStrPi, int startPos, long durationMilli) {
-	static auto timeAtStart = chrono::system_clock::now();
 	static int digitsPerShape = getDigitsPerShape();
 	static int printIndex = 0;
 	static int shapesBeforeStatus = shapesToPrint;
@@ -259,9 +263,11 @@ int piPrintChudnovsky(const string &subStrPi, int startPos, long durationMilli) 
 		return startPos;
 	}
 
+	
 	int digitsToPrint = subStrPi.size();
 	int digitsPerStatus = digitsPerShape*shapesToPrint;
 	int statusesToPrint = digitsToPrint / digitsPerStatus;
+	/*
 	int durationLeft = durationMilli - (statusesToPrint*statusDelayMaxMilli);
 	if (durationLeft < 0)
 		durationLeft = 0;
@@ -272,6 +278,7 @@ int piPrintChudnovsky(const string &subStrPi, int startPos, long durationMilli) 
 	}
 	if (statusDelay < statusDelayMinMilli) statusDelay = statusDelayMinMilli;
 	if (statusDelay > statusDelayMaxMilli) statusDelay = statusDelayMaxMilli;
+	*/
 
 
 	bool printDecimal = false;
@@ -289,21 +296,21 @@ int piPrintChudnovsky(const string &subStrPi, int startPos, long durationMilli) 
 				continue;
 			}
 			cout << subStrPi[i];
-			this_thread::sleep_for(chrono::milliseconds(printDelay));
+			//this_thread::sleep_for(chrono::milliseconds(printDelay));
 
 			printIndex++;
 		}
 		else {
 			shapesBeforeStatus--;
 			if (shapesBeforeStatus <= 0) {
-				auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - timeAtStart);
-				printStatus(startPos + i, elapsed);
-				this_thread::sleep_for(chrono::milliseconds(statusDelay));
+				printStatus(startPos + i);
+				//this_thread::sleep_for(chrono::milliseconds(statusDelay));
 				shapesBeforeStatus = shapesToPrint;
 			}
 			i--;
 			printIndex = 0;
 			updateCurrentDigits(i + startPos);
+			updateElapsed(formatElapsedTime(getElapsedTime()));
 			continue;
 		}
 	}
@@ -312,8 +319,10 @@ int piPrintChudnovsky(const string &subStrPi, int startPos, long durationMilli) 
 
 	if (endPos == targetDigits) {
 		cout << endl;
-		auto elapsed = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - timeAtStart);
-		printStatus(targetDigits, elapsed);
+		printStatus(targetDigits);
+		updateCurrentDigits(targetDigits);
+		updateEstimated("0");
+		updateElapsed(formatElapsedTime(getElapsedTime()));
 		return endPos;
 	}
 
